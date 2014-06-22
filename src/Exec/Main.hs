@@ -1,7 +1,7 @@
 module Main where
 
-import Data.Geocoder
-import Data.Geocoder.Google
+import Network.Geocoder
+import Network.Geocoder.Google
 import System.Environment
 import qualified Data.List as L
 

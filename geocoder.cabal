@@ -24,6 +24,7 @@ executable geo
 
 library
   exposed-modules:     Network.Geocoder,
+                       Network.Geocoder.Bing,
                        Network.Geocoder.Google
   other-modules:       Network.Geocoder.Util
   -- other-extensions:    

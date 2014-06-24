@@ -1,5 +1,6 @@
 module Network.Geocoder.Util
-    ( buildURL
+    ( maybeCons
+    , buildURL
     , maybeGet
     , maybeGetJSON
     ) where
@@ -9,6 +10,12 @@ import Network.HTTP.Types.Method
 import Network.URL (exportParams)
 import Data.Aeson (FromJSON(..), decode)
 import qualified Data.ByteString.Lazy.Char8 as BS
+
+maybeCons :: Maybe a -> (a -> b) -> [b] -> [b]
+maybeCons m f l =
+    case m of
+      Nothing -> l
+      Just a' -> (f a') : l
 
 buildURL :: String -> [(String, String)] -> String
 buildURL url params = url ++ exportParams params

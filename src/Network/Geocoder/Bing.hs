@@ -12,9 +12,9 @@ module Network.Geocoder.Bing
 import Network.Geocoder
 import Network.Geocoder.Util
 import Control.Applicative ((<$>), (<*>))
-import Data.Aeson (FromJSON(..), Value(..), (.:))
+import Data.Aeson (FromJSON(..), Value(..), (.:), (.:?))
 
-baseURL = "https://dev.virtualearth.net/REST/v1/Locations?"
+baseURL = "https://dev.virtualearth.net/REST/v1/Locations"
 
 -- BingGeocoder
 
@@ -71,7 +71,7 @@ instance FromJSON BingResultSet where
 
 data BingResult = BingResult {
       resultType :: String
-    , bbox :: [Double]
+    , bbox :: (Double, Double, Double, Double)
     , name :: String
     , point :: BingPoint
     , address :: BingAddress
@@ -100,40 +100,44 @@ instance FromJSON BingResult where
 
 data BingPoint = BingPoint {
       pointType :: String
-    , coordinates :: [Double]
+    , coordinates :: (Double, Double)
     , calculationMethod :: Maybe String
-    , usageTypes :: [String]
+    , usageTypes :: Maybe [String]
     } deriving (Eq, Show)
 
 pointLocation :: BingPoint -> Location
-pointLocation p = Location { lat = coords !! 0, lng = coords !! 1 }
+pointLocation p = Location { lat = fst coords, lng = snd coords }
     where coords = coordinates p
 
 instance FromJSON BingPoint where
     parseJSON (Object v) = BingPoint
-      <$> v .: "type"
-      <*> v .: "coordinates"
-      <*> v .: "calculationMethod"
-      <*> v .: "usageTypes"
+      <$> v .:  "type"
+      <*> v .:  "coordinates"
+      <*> v .:? "calculationMethod"
+      <*> v .:? "usageTypes"
 
 -- BingAddress
 
 data BingAddress = BingAddress {
-      adminDistrict :: String
+      addressLine :: Maybe String
+    , adminDistrict :: String
     , adminDistrict2 :: String
     , countryRegion :: String
     , formattedAddress :: String
     , locality :: String
-    , neighborhood :: String
-    , landmark :: String
+    , postalCode :: Maybe String
+    , neighborhood :: Maybe String
+    , landmark :: Maybe String
     } deriving (Eq, Show)
 
 instance FromJSON BingAddress where
     parseJSON (Object v) = BingAddress
-      <$> v .: "adminDistrict"
-      <*> v .: "adminDistrict2"
-      <*> v .: "countryRegion"
-      <*> v .: "formattedAddress"
-      <*> v .: "locality"
-      <*> v .: "neighborhood"
-      <*> v .: "landmark"
+      <$> v .:? "addressLine"
+      <*> v .:  "adminDistrict"
+      <*> v .:  "adminDistrict2"
+      <*> v .:  "countryRegion"
+      <*> v .:  "formattedAddress"
+      <*> v .:  "locality"
+      <*> v .:? "postalCode"
+      <*> v .:? "neighborhood"
+      <*> v .:? "landmark"

@@ -7,7 +7,8 @@ module Network.Geocoder.Util
 
 import Network.HTTP.Conduit
 import Network.HTTP.Types.Method
-import Network.URL (exportParams)
+import Network.HTTP (urlEncodeVars)
+import Control.Concurrent.Async
 import Data.Aeson (FromJSON(..), decode)
 import qualified Data.ByteString.Lazy.Char8 as BS
 
@@ -18,11 +19,12 @@ maybeCons m f l =
       Just a' -> (f a') : l
 
 buildURL :: String -> [(String, String)] -> String
-buildURL url params = url ++ exportParams params
+buildURL url params = url ++ "?" ++ urlEncodeVars params
 
 maybeGet :: String -> IO (Maybe BS.ByteString)
 maybeGet url = do
-  rsp <- simpleHttp url
+  a <- async $ simpleHttp url
+  rsp <- wait a -- TODO: Return Async (Maybe BS)
   return $ Just rsp
 
 maybeGetJSON :: (FromJSON a) => String -> IO (Maybe a)

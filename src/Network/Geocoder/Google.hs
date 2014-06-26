@@ -14,7 +14,7 @@ import Network.Geocoder.Util
 import Control.Applicative ((<$>), (<*>))
 import Data.Aeson (FromJSON(..), Value(..), (.:))
 
-baseURL = "https://maps.googleapis.com/maps/api/geocode/json?"
+baseURL = "https://maps.googleapis.com/maps/api/geocode/json"
 
 -- GoogleGeocoder
 

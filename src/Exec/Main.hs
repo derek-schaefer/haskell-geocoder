@@ -2,11 +2,11 @@ module Main where
 
 import System.Environment
 import Network.Geocoder
-import qualified Network.Geocoder.Google as Google
+import Network.Geocoder.Google
 
 main :: IO ()
 main = do
-  let geo = Google.GoogleGeocoder { Google.key = Nothing }
+  let geo = GoogleGeocoder { key = Nothing }
   args <- getArgs
   mapM_ (\a -> do { loc <- getLocationStr geo a; putStrLn $ show loc }) args
 

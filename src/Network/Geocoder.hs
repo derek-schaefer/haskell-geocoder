@@ -11,35 +11,12 @@ import Data.Aeson
     ( FromJSON(..), ToJSON(..), Value(..),
       (.:), (.:?), (.=), object )
 
-data Address = Address {
-      line1 :: String,
-      line2 :: Maybe String,
-      city :: String,
-      postal :: String,
-      province :: String,
-      country :: String
-    } deriving (Eq, Show)
+-- Geocoder
 
-addressStr :: Address -> String
-addressStr a = "asdf"
+class Geocoder g where
+    encodeStr  :: g -> String -> IO [Location]
 
-instance FromJSON Address where
-    parseJSON (Object v) =
-        Address <$> v .:  "line1"
-                <*> v .:? "line2"
-                <*> v .:  "city"
-                <*> v .:  "postal"
-                <*> v .:  "province"
-                <*> v .:  "country"
-
-instance ToJSON Address where
-    toJSON (Address line1 line2 city province zipcode country) =
-        object [ "line1"    .= line1
-               , "line2"    .= line2
-               , "city"     .= city
-               , "province" .= province
-               , "zipcode"  .= zipcode
-               , "country"  .= country ]
+-- Location
 
 data Location = Location {
       lat :: Double
@@ -56,7 +33,31 @@ instance ToJSON Location where
         object [ "lat" .= lat
                , "lng" .= lng ]
 
-class Geocoder g where
-    --encode :: g -> Address -> IO [Location]
-    encodeStr :: g -> String -> IO [Location]
-    --decode :: g -> Location -> IO [String]
+-- Address
+
+data Address = Address {
+      line1 :: String,
+      line2 :: Maybe String,
+      city :: String,
+      postal :: String,
+      province :: String,
+      country :: String
+    } deriving (Eq, Show)
+
+instance FromJSON Address where
+    parseJSON (Object v) =
+        Address <$> v .:  "line1"
+                <*> v .:? "line2"
+                <*> v .:  "city"
+                <*> v .:  "postal"
+                <*> v .:  "province"
+                <*> v .:  "country"
+
+instance ToJSON Address where
+    toJSON (Address line1 line2 city postal province country) =
+        object [ "line1"    .= line1
+               , "line2"    .= line2
+               , "city"     .= city
+               , "postal"   .= postal
+               , "province" .= province
+               , "country"  .= country ]

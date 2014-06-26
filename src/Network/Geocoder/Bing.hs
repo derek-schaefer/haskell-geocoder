@@ -22,10 +22,15 @@ data BingGeocoder = BingGeocoder {
       key :: String
     } deriving (Eq, Show)
 
+buildURL' :: BingGeocoder -> String -> String
+buildURL' g loc = buildURL baseURL [("q", loc), ("o", "json"), ("key", key g)]
+
+getResponse :: BingGeocoder -> String -> IO (Maybe BingResponse)
+getResponse g loc = maybeGetJSON $ buildURL' g loc
+
 instance Geocoder BingGeocoder where
     encodeStr g loc = do
-      let uri = buildURL baseURL [("q", loc), ("o", "json"), ("key", key g)]
-      mrsp <- (maybeGetJSON uri :: IO (Maybe BingResponse))
+      mrsp <- getResponse g loc
       case mrsp of
         Nothing -> return []
         Just rsp ->

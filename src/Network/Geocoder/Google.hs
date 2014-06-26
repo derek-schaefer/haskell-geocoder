@@ -22,11 +22,16 @@ data GoogleGeocoder = GoogleGeocoder {
       key :: Maybe String
     } deriving (Eq, Show)
 
+buildURL' :: GoogleGeocoder -> String -> String
+buildURL' g loc = buildURL baseURL $ keyParam ++ [("address", loc)]
+    where keyParam = maybeCons (key g) (\k -> ("key", k)) []
+
+getResponse :: GoogleGeocoder -> String -> IO (Maybe GoogleResponse)
+getResponse g loc = maybeGetJSON $ buildURL' g loc
+
 instance Geocoder GoogleGeocoder where
     encodeStr g loc = do
-      let keyParam = maybeCons (key g) (\k -> ("key", k)) []
-          uri = buildURL baseURL $ keyParam ++ [("address", loc)]
-      mrsp <- (maybeGetJSON uri :: IO (Maybe GoogleResponse))
+      mrsp <- getResponse g loc
       case mrsp of
         Nothing -> return []
         Just rsp -> return $ map (\r -> location $ geometry r) $ results rsp

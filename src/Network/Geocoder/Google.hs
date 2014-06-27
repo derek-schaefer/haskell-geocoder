@@ -2,11 +2,11 @@
 
 module Network.Geocoder.Google
     ( GoogleGeocoder(..)
-    , GoogleResponse(..)
-    , GoogleResult(..)
-    , GoogleGeometry(..)
-    , GoogleViewport(..)
-    , GoogleAddressComponent(..)
+    , Response(..)
+    , Result(..)
+    , Geometry(..)
+    , Viewport(..)
+    , AddressComponent(..)
     ) where
 
 import Network.Geocoder
@@ -22,84 +22,85 @@ data GoogleGeocoder = GoogleGeocoder {
       key :: Maybe String
     } deriving (Eq, Show)
 
-buildURL' :: GoogleGeocoder -> String -> String
-buildURL' g loc = buildURL baseURL $ keyParam ++ [("address", loc)]
-    where keyParam = maybeCons (key g) (\k -> ("key", k)) []
-
-getResponse :: GoogleGeocoder -> String -> IO (Maybe GoogleResponse)
-getResponse g loc = maybeGetJSON $ buildURL' g loc
+getEncodeResponse :: GoogleGeocoder -> String -> IO (Maybe Response)
+getEncodeResponse g loc = maybeGetJSON $ buildURL' baseURL params
+    where params = [("key", key g), ("address", Just loc)]
 
 instance Geocoder GoogleGeocoder where
-    encodeStr g loc = do
-      mrsp <- getResponse g loc
+
+    encode g loc = do
+      mrsp <- getEncodeResponse g loc
       case mrsp of
-        Nothing -> return []
-        Just rsp -> return $ map (\r -> location $ geometry r) $ results rsp
+        Nothing  -> return []
+        Just rsp -> return $ map loc' (results rsp)
+            where loc' r = location . geometry $ r
 
--- GoogleResponse
+    encode' g loc = encode g $ addressStr loc
 
-data GoogleResponse = GoogleResponse {
+-- Response
+
+data Response = Response {
       status :: String,
-      results :: [GoogleResult]
+      results :: [Result]
     } deriving (Eq, Show)
 
-instance FromJSON GoogleResponse where
-    parseJSON (Object v) = GoogleResponse
+instance FromJSON Response where
+    parseJSON (Object v) = Response
       <$> v .: "status"
       <*> v .: "results"
 
--- GoogleResult
+-- Result
 
-data GoogleResult = GoogleResult {
+data Result = Result {
       types :: [String]
     , formattedAddress :: String
-    , addressComponents :: [GoogleAddressComponent]
-    , geometry :: GoogleGeometry
+    , addressComponents :: [AddressComponent]
+    , geometry :: Geometry
     } deriving (Eq, Show)
 
-instance FromJSON GoogleResult where
-    parseJSON (Object v) = GoogleResult
+instance FromJSON Result where
+    parseJSON (Object v) = Result
       <$> v .: "types"
       <*> v .: "formatted_address"
       <*> v .: "address_components"
       <*> v .: "geometry"
 
--- GoogleGeometry
+-- Geometry
 
-data GoogleGeometry = GoogleGeometry {
+data Geometry = Geometry {
       location :: Location
     , locationType :: String
-    , viewport :: GoogleViewport
+    , viewport :: Viewport
     } deriving (Eq, Show)
 
-instance FromJSON GoogleGeometry where
-    parseJSON (Object v) = GoogleGeometry
+instance FromJSON Geometry where
+    parseJSON (Object v) = Geometry
       <$> v .: "location"
       <*> v .: "location_type"
       <*> v .: "viewport"
 
--- GoogleViewport
+-- Viewport
 
-data GoogleViewport = GoogleViewport {
+data Viewport = Viewport {
       northEast :: Location
     , southWest :: Location
     } deriving (Eq, Show)
 
-instance FromJSON GoogleViewport where
-    parseJSON (Object v) = GoogleViewport
+instance FromJSON Viewport where
+    parseJSON (Object v) = Viewport
       <$> v .: "northeast"
       <*> v .: "southwest"
 
--- GoogleAddressComponent
+-- AddressComponent
 
-data GoogleAddressComponent = GoogleAddressComponent {
+data AddressComponent = AddressComponent {
       longName :: String
     , shortName :: String
     , addressTypes :: [String]
     } deriving (Eq, Show)
 
-instance FromJSON GoogleAddressComponent where
-    parseJSON (Object v) = GoogleAddressComponent
+instance FromJSON AddressComponent where
+    parseJSON (Object v) = AddressComponent
       <$> v .: "long_name"
       <*> v .: "short_name"
       <*> v .: "types"

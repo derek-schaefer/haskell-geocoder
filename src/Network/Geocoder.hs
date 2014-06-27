@@ -2,10 +2,12 @@
 
 module Network.Geocoder
     ( Geocoder(..)
-    , Address(..)
     , Location(..)
+    , Address(..)
+    , addressStr
     ) where
 
+import Data.List (intercalate)
 import Control.Applicative ((<$>), (<*>))
 import Data.Aeson
     ( FromJSON(..), ToJSON(..), Value(..),
@@ -14,7 +16,10 @@ import Data.Aeson
 -- Geocoder
 
 class Geocoder g where
-    encodeStr  :: g -> String -> IO [Location]
+    encode  :: g -> String -> IO [Location]
+    encode' :: g -> Address -> IO [Location]
+    --decode  :: g -> (Double, Double) -> IO [Address]
+    --decode' :: g -> Location -> IO [Address]
 
 -- Location
 
@@ -43,6 +48,14 @@ data Address = Address {
       province :: String,
       country :: String
     } deriving (Eq, Show)
+
+addressStr :: Address -> String
+addressStr a = intercalate ", " $ map elemToStr elems
+    where elems = [Just (line1 a), line2 a, Just (city a), Just (postal a),
+                   Just (province a), Just (country a)]
+          elemToStr e = case e of
+                          Nothing -> ""
+                          Just e  -> show e
 
 instance FromJSON Address where
     parseJSON (Object v) =

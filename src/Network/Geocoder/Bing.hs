@@ -2,14 +2,14 @@
 
 module Network.Geocoder.Bing
     ( BingGeocoder(..)
-    , BingResponse(..)
-    , BingResultSet(..)
-    , BingResult(..)
-    , BingAddress(..)
-    , BingPoint(..)
+    , Response(..)
+    , ResultSet(..)
+    , Result(..)
+    , Address(..)
+    , Point(..)
     ) where
 
-import Network.Geocoder
+import Network.Geocoder hiding (Address)
 import Network.Geocoder.Util
 import Control.Applicative ((<$>), (<*>))
 import Data.Aeson (FromJSON(..), Value(..), (.:), (.:?))
@@ -22,15 +22,14 @@ data BingGeocoder = BingGeocoder {
       key :: String
     } deriving (Eq, Show)
 
-buildURL' :: BingGeocoder -> String -> String
-buildURL' g loc = buildURL baseURL [("q", loc), ("o", "json"), ("key", key g)]
-
-getResponse :: BingGeocoder -> String -> IO (Maybe BingResponse)
-getResponse g loc = maybeGetJSON $ buildURL' g loc
+getEncodeResponse :: BingGeocoder -> String -> IO (Maybe Response)
+getEncodeResponse g loc = maybeGetJSON $ buildURL baseURL params
+    where params = [("q", loc), ("o", "json"), ("key", key g)]
 
 instance Geocoder BingGeocoder where
-    encodeStr g loc = do
-      mrsp <- getResponse g loc
+
+    encode g loc = do
+      mrsp <- getEncodeResponse g loc
       case mrsp of
         Nothing -> return []
         Just rsp ->
@@ -38,20 +37,22 @@ instance Geocoder BingGeocoder where
               (r:rs) -> return $ map resultLocation $ results r
               _      -> return []
 
--- BingResponse
+    encode' g loc = encode g $ addressStr loc
 
-data BingResponse = BingResponse {
+-- Response
+
+data Response = Response {
       traceID :: String
     , statusCode :: Int
     , statusDescription :: String
     , authenticationResultCode :: String
     , brandLogoURI :: String
     , copyright :: String
-    , resultSet :: [BingResultSet]
+    , resultSet :: [ResultSet]
     } deriving (Eq, Show)
 
-instance FromJSON BingResponse where
-    parseJSON (Object v) = BingResponse
+instance FromJSON Response where
+    parseJSON (Object v) = Response
       <$> v .: "traceId"
       <*> v .: "statusCode"
       <*> v .: "statusDescription"
@@ -60,37 +61,37 @@ instance FromJSON BingResponse where
       <*> v .: "copyright"
       <*> v .: "resourceSets"
 
--- BingResultSet
+-- ResultSet
 
-data BingResultSet = BingResultSet {
+data ResultSet = ResultSet {
       estimatedTotal :: Int,
-      results :: [BingResult]
+      results :: [Result]
     } deriving (Eq, Show)
 
-instance FromJSON BingResultSet where
-    parseJSON (Object v) = BingResultSet
+instance FromJSON ResultSet where
+    parseJSON (Object v) = ResultSet
       <$> v .: "estimatedTotal"
       <*> v .: "resources"
 
--- BingResult
+-- Result
 
-data BingResult = BingResult {
+data Result = Result {
       resultType :: String
     , bbox :: (Double, Double, Double, Double)
     , name :: String
-    , point :: BingPoint
-    , address :: BingAddress
+    , point :: Point
+    , address :: Address
     , confidence :: String
     , entityType :: String
-    , geocodePoints :: [BingPoint]
+    , geocodePoints :: [Point]
     , matchCodes :: [String]
     } deriving (Eq, Show)
 
-resultLocation :: BingResult -> Location
+resultLocation :: Result -> Location
 resultLocation r = pointLocation $ point r
 
-instance FromJSON BingResult where
-    parseJSON (Object v) = BingResult
+instance FromJSON Result where
+    parseJSON (Object v) = Result
       <$> v .: "__type"
       <*> v .: "bbox"
       <*> v .: "name"
@@ -101,29 +102,29 @@ instance FromJSON BingResult where
       <*> v .: "geocodePoints"
       <*> v .: "matchCodes"
 
--- BingPoint
+-- Point
 
-data BingPoint = BingPoint {
+data Point = Point {
       pointType :: String
     , coordinates :: (Double, Double)
     , calculationMethod :: Maybe String
     , usageTypes :: Maybe [String]
     } deriving (Eq, Show)
 
-pointLocation :: BingPoint -> Location
+pointLocation :: Point -> Location
 pointLocation p = Location { lat = fst coords, lng = snd coords }
     where coords = coordinates p
 
-instance FromJSON BingPoint where
-    parseJSON (Object v) = BingPoint
+instance FromJSON Point where
+    parseJSON (Object v) = Point
       <$> v .:  "type"
       <*> v .:  "coordinates"
       <*> v .:? "calculationMethod"
       <*> v .:? "usageTypes"
 
--- BingAddress
+-- Address
 
-data BingAddress = BingAddress {
+data Address = Address {
       addressLine :: Maybe String
     , adminDistrict :: String
     , adminDistrict2 :: String
@@ -135,8 +136,8 @@ data BingAddress = BingAddress {
     , landmark :: Maybe String
     } deriving (Eq, Show)
 
-instance FromJSON BingAddress where
-    parseJSON (Object v) = BingAddress
+instance FromJSON Address where
+    parseJSON (Object v) = Address
       <$> v .:? "addressLine"
       <*> v .:  "adminDistrict"
       <*> v .:  "adminDistrict2"

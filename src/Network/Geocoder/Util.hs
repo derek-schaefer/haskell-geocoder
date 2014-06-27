@@ -1,6 +1,7 @@
 module Network.Geocoder.Util
-    ( maybeCons
+    ( catParams
     , buildURL
+    , buildURL'
     , maybeGet
     , maybeGetJSON
     ) where
@@ -12,14 +13,14 @@ import Control.Concurrent.Async
 import Data.Aeson (FromJSON(..), decode)
 import qualified Data.ByteString.Lazy.Char8 as BS
 
-maybeCons :: Maybe a -> (a -> b) -> [b] -> [b]
-maybeCons m f l =
-    case m of
-      Nothing -> l
-      Just a' -> (f a') : l
+catParams :: [(a, Maybe b)] -> [(a, b)]
+catParams ts = [(t1, t2) | (t1, Just t2) <- ts]
 
 buildURL :: String -> [(String, String)] -> String
 buildURL url params = url ++ "?" ++ urlEncodeVars params
+
+buildURL' :: String -> [(String, Maybe String)] -> String
+buildURL' base params = base ++ "?" ++ (urlEncodeVars $ catParams params)
 
 maybeGet :: String -> IO (Maybe BS.ByteString)
 maybeGet url = do

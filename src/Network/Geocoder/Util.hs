@@ -20,7 +20,7 @@ buildURL :: String -> [(String, String)] -> String
 buildURL url params = url ++ "?" ++ urlEncodeVars params
 
 buildURL' :: String -> [(String, Maybe String)] -> String
-buildURL' base params = base ++ "?" ++ (urlEncodeVars $ catParams params)
+buildURL' url params = buildURL url $ catParams params
 
 maybeGet :: String -> IO (Maybe BS.ByteString)
 maybeGet url = do

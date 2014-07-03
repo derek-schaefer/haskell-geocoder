@@ -18,7 +18,7 @@ import Data.Aeson
 class Geocoder g where
     encode  :: g -> String -> IO [Location]
     encode' :: g -> Address -> IO [Location]
-    --decode  :: g -> (Double, Double) -> IO [Address]
+    decode  :: g -> Double -> Double -> IO [String] -- TODO: IO [Address]
     --decode' :: g -> Location -> IO [Address]
 
 -- Location

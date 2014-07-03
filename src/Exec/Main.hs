@@ -14,3 +14,8 @@ getLocationStr :: (Geocoder g) => g -> String -> IO [String]
 getLocationStr geo addr = do
   locs <- encode geo addr
   return $ map show locs
+
+getAddressStr :: (Geocoder g) => g -> Double -> Double -> IO [String]
+getAddressStr geo lat lng = do
+  addrs <- decode geo lat lng
+  return $ map show addrs

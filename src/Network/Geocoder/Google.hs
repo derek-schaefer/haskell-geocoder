@@ -26,6 +26,11 @@ getEncodeResponse :: GoogleGeocoder -> String -> IO (Maybe Response)
 getEncodeResponse g loc = maybeGetJSON $ buildURL' baseURL params
     where params = [("key", key g), ("address", Just loc)]
 
+getDecodeResponse :: GoogleGeocoder -> Double -> Double -> IO (Maybe Response)
+getDecodeResponse g lat lng = maybeGetJSON $ buildURL' baseURL params
+    where latlng = (show lat) ++ "," ++ (show lng)
+          params = [("key", key g), ("latlng", Just latlng)]
+
 instance Geocoder GoogleGeocoder where
 
     encode g loc = do
@@ -36,6 +41,13 @@ instance Geocoder GoogleGeocoder where
             where loc' r = location . geometry $ r
 
     encode' g loc = encode g $ addressStr loc
+
+    decode g lat lng = do
+      mrsp <- getDecodeResponse g lat lng
+      case mrsp of
+        Nothing  -> return []
+        Just rsp -> return $ map loc' (results rsp)
+            where loc' r = formattedAddress r
 
 -- Response
 
